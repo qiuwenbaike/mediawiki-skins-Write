@@ -1,0 +1,12 @@
+{
+	"@metadata": {
+		"authors": [
+			"IJzeren Jan"
+		]
+	},
+	"skinname-write": "Write",
+	"write-default": "standardne",
+	"write-desc": "Prosta i čista vizualna tema, osnovana na bibliotekě Bootstrap.",
+	"write-font-label": "Razměr fonta",
+	"write-tools-menu": "Pravjenje i orudja"
+}

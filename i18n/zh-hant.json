@@ -1,6 +1,10 @@
 {
 	"@metadata": {
-		"authors": ["Kly"]
+		"authors": [
+			"Kly",
+			"Peterxy12",
+			"Qiuwen Baike Contributors"
+		]
 	},
 	"skinname-write": "Write",
 	"write-default": "預設",

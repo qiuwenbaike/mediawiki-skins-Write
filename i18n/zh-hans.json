@@ -1,6 +1,10 @@
 {
 	"@metadata": {
-		"authors": ["Lakejason0"]
+		"authors": [
+			"GuoPC",
+			"Lakejason0",
+			"Qiuwen Baike Contributors"
+		]
 	},
 	"skinname-write": "Write",
 	"write-default": "默认",

@@ -1,0 +1,12 @@
+{
+	"@metadata": {
+		"authors": [
+			"Constraque"
+		]
+	},
+	"skinname-write": "Медік",
+	"write-default": "штандардна",
+	"write-desc": "Проста і чіста тема оформлїня, заложена на бібліотецї Bootstrap.",
+	"write-font-label": "Великость писма",
+	"write-tools-menu": "Едітованя і інштрументы"
+}

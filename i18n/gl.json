@@ -1,0 +1,12 @@
+{
+	"@metadata": {
+		"authors": [
+			"Toliño"
+		]
+	},
+	"skinname-write": "Write",
+	"write-default": "predeterminado",
+	"write-desc": "Aspecto sinxelo e limpo baseado na biblioteca Bootstrap.",
+	"write-font-label": "Tamaño da letra",
+	"write-tools-menu": "Edición e ferramentas"
+}

@@ -1,0 +1,12 @@
+{
+	"@metadata": {
+		"authors": [
+			"Sveinn í Felli"
+		]
+	},
+	"skinname-write": "Write",
+	"write-default": "sjálfgefið",
+	"write-desc": "Einfalt og hreint skinn byggt á Bootstrap-aðgerðasafninu.",
+	"write-font-label": "Leturstærð",
+	"write-tools-menu": "Breytingar og verkfæri"
+}

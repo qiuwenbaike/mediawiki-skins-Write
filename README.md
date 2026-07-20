@@ -2,7 +2,7 @@
 
 _A MediaWiki skin based on Bootstrap 4._
 
-![Write](assets/write.png)
+![Write](write.png)
 
 ## Installation
 

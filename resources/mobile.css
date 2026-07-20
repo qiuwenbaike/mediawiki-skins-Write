@@ -24,7 +24,7 @@
 	font-size: inherit;
 	font-style: normal;
 	height: 1em;
-	margin-right: 1em;
+	margin: 0 1em;
 	position: relative;
 	text-indent: -9999px;
 	vertical-align: middle;
@@ -58,6 +58,10 @@
 	top: 8px;
 }
 
+#user-tools {
+	margin-right: 1em;
+}
+
 .profile-icon {
 	background-color: #fff;
 	border: 1px solid #fff;
@@ -87,7 +91,7 @@
 	position: absolute;
 	left: 100%;
 	top: calc( 100% + 1.5em );
-	margin-left: -92vw;
+	margin-left: -97vw;
 }
 
 #searchInput {
@@ -95,7 +99,6 @@
 }
 
 aside {
-	font-size: 80%;
 	padding: 0.5em 0;
 }
 
@@ -118,6 +121,11 @@ aside .dropdown,
 #p-namespaces span {
 	padding-right: 1em;
 	padding-bottom: 0.5em;
+}
+
+#p-namespaces .mw-portlet-body > div {
+	display: flex;
+	flex-wrap: wrap;
 }
 
 /* Main content
@@ -161,6 +169,10 @@ aside .dropdown,
 	padding-left: 1rem;
 	padding-right: 1rem;
 	margin: auto;
+}
+
+#footer ul {
+	margin-left: 0;
 }
 
 li.footer-icons {

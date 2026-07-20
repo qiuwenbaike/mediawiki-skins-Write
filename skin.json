@@ -1,34 +1,34 @@
 {
 	"name": "Write",
 	"namemsg": "skinname-write",
-	"version": "3.3.0",
+	"version": "6.0.0",
 	"author": [ "Petr Kajzar", "Qiuwen Baike Contributors" ],
-	"url": "https://git.qiuwen.net.cn/Qiuwen/mediawiki-skins-Write",
-	"description": "MediaWiki skin based on Bootstrap 4",
+	"url": "https://git.qiuwen.net.cn/Qiuwen/Write",
+	"description": "Simple and clean skin based on the Bootstrap library",
 	"descriptionmsg": "write-desc",
 	"license-name": "CC0-1.0",
 	"type": "skin",
 	"ValidSkinNames": {
 		"write": {
-			"displayname": "Write",
-			"class": "MediaWiki\\Skin\\Write\\SkinWrite",
+			"class": "SkinWrite",
 			"args": [
 				{
 					"name": "write",
-					"template": "MediaWiki\\Skin\\Write\\WriteTemplate",
+					"bodyOnly": true,
+					"template": "WriteTemplate",
 					"responsive": true,
-					"styles": [ "skins.write.styles" ],
 					"scripts": [
-						"skins.write.bootstrap",
 						"skins.write.js"
 					],
-					"bodyOnly": true
+					"styles": [
+						"skins.write"
+					]
 				}
 			]
 		}
 	},
 	"requires": {
-		"MediaWiki": ">= 1.39.0"
+		"MediaWiki": ">= 1.43.0"
 	},
 	"MessagesDirs": {
 		"Write": [ "i18n" ]
@@ -55,24 +55,16 @@
 			"description": "Show only logo without text in the navbar."
 		}
 	},
-	"Hooks": {
-		"GetPreferences": "MediaWiki\\Skin\\Write\\SkinWrite::onGetPreferences"
-	},
-	"DefaultUserOptions": {
-		"write-font": "1em"
-	},
 	"ResourceModules": {
-		"skins.write.styles": {
-			"class": "ResourceLoaderSkinModule",
+		"skins.write": {
+			"class": "MediaWiki\\ResourceLoader\\SkinModule",
 			"features": {
-				"legacy": false,
 				"content-links": true,
+				"content-links-external": true,
 				"content-media": true,
-				"interface-message-box": true,
 				"interface-category": true,
 				"content-tables": true,
 				"i18n-ordered-lists": true,
-				"i18n-all-lists-margins": true,
 				"i18n-headings": true,
 				"elements": true,
 				"interface": true,
@@ -96,16 +88,11 @@
 				}
 			}
 		},
-		"skins.write.bootstrap": {
-			"targets": [ "desktop", "mobile" ],
-			"scripts": [
-				"resources/libraries/popper.min.js",
-				"resources/libraries/bootstrap.min.js"
-			]
-		},
 		"skins.write.js": {
-			"targets": [ "desktop", "mobile" ],
-			"packageFiles": [ "resources/main.js" ]
+			"scripts": [
+				"resources/main.js",
+				"resources/libraries/bootstrap.bundle.min.js"
+			]
 		}
 	},
 	"ResourceFileModulePaths": {

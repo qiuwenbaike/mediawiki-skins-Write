@@ -1,72 +1,72 @@
 <?php
 
+use MediaWiki\MediaWikiServices;
+
 /**
  * BaseTemplate class for the Write skin
- * https://git.qiuwen.net.cn/Qiuwen/mediawiki-skins-Write
  *
  * @ingroup Skins
- * @author Petr Kajzar (1st Faculty of Medicine, Charles University, Czech Republic)
- * @modified by Qiuwen Baike Contributors
- * @license https://creativecommons.org/publicdomain/zero/1.0/ CC0-1.0
  */
-
-namespace MediaWiki\Skin\Write;
-
-use BaseTemplate;
-use Hooks;
-use Html;
-use Linker;
-use Sanitizer;
-use TemplateParser;
-use RequestContext;
-
-class WriteTemplate extends BaseTemplate
-{
+class WriteTemplate extends BaseTemplate {
+	
+	private $templateParserClass;
+	private $htmlClass;
+	private $linkerClass;
 
 	/**
 	 * Outputs the entire contents of the page
 	 * (uses templates/skin.mustache as a template)
 	 */
-	public function execute()
-	{
-		$templateParser = new TemplateParser(__DIR__ . '/../templates');
-		$sidebarWidth = [
-			'full' => 'col-md-3 col-xl-2',
-			'default' => 'col-md-3 col-xl-2',
-			'narrow' => 'col-md-3 col-xl-2',
-			'wide' => 'col-md-2 col-xl-1'
-		];
+	public function execute() {
+		$this->resolveMwVersion();
+		$templateParser = new $this->templateParserClass( __DIR__ . '/../templates' );
 		$contentWidth = [
-			'full' => 'col-md-9 col-xl-10',
-			'default' => 'col-md-9 col-xl-9',
-			'narrow' => 'col-md-9 col-xl-8',
-			'wide' => 'col-md-10'
+			'full' => 'col-xl-10',
+			'default' => 'col-xl-9',
+			'narrow' => 'col-xl-8',
 		];
-		echo $templateParser->processTemplate('skin', [
-			'write-color' => RequestContext::getMain()->getConfig()->get('WriteColor'),
+
+		echo $templateParser->processTemplate( 'skin', [
+			'write-color' => RequestContext::getMain()->getConfig()->get( 'WriteColor' ),
 			'html-logo' => $this->getLogo(),
 			'html-search-userlinks' => $this->getSearch() . $this->getUserLinks(),
-			'write-sidebar-width' => $sidebarWidth[RequestContext::getMain()->getConfig()->get('WriteContentWidth')] ?? $sidebarWidth['default'],
-			'write-fontsize' => $this->getSkin()->getUser()->getOption('write-font'),
-			'html-navigation-heading' => $this->getMsg('navigation-heading')->parse(),
+			'html-navigation-heading' => $this->getMsg( 'navigation-heading' )->parse(),
 			'html-site-navigation' => $this->getSiteNavigation(),
-			'write-content-width' => $contentWidth[RequestContext::getMain()->getConfig()->get('WriteContentWidth')] ?? $contentWidth['default'],
+			'write-content-width' => $contentWidth[
+				RequestContext::getMain()->getConfig()->get( 'WriteContentWidth' )
+				] ?? $contentWidth['default'],
 			'html-sitenotice' => $this->getSiteNotice(),
 			'html-talknotice' => $this->getNewTalk(),
 			'html-aside' => $this->getAside(),
 			'html-indicators' => $this->getIndicators(),
-			'pagelanguage' => $this->get('pageLanguage'),
-			'html-pagetitle' => $this->get('title'),
-			'html-tagline' => $this->getMsg('tagline')->parse(),
+			'pagelanguage' => $this->get( 'pageLanguage' ),
+			'html-pagetitle' => $this->get( 'title' ),
+			'html-tagline' => $this->getMsg( 'tagline' )->parse(),
 			'html-pagesubtitle' => $this->getPageSubtitle(),
-			'html-undelete' => $this->get('undelete'),
-			'html-bodycontent' => $this->get('bodycontent'),
+			'html-undelete' => $this->get( 'undelete' ),
+			'html-bodycontent' => $this->get( 'bodycontent' ),
 			'html-clear' => $this->getClear(),
-			'html-printfooter' => $this->get('printfooter'),
+			'html-printfooter' => $this->get( 'printfooter' ),
 			'html-categorylinks' => $this->getCategoryLinks(),
-			'html-dataaftercontent' => $this->getDataAfterContent() . $this->get('debughtml'),
+			'html-dataaftercontent' => $this->getDataAfterContent() . $this->get( 'debughtml' ),
 			'html-footer' => $this->getFooterBlock(),
-		]);
+		] );
+	}
+
+	/**
+	 * This is needed to resolve the differences with the TemplateParser, Html, and Linker classes
+	 * between MediaWiki 1.43 and 1.44
+	 */
+	protected function resolveMwVersion() {
+		if ( version_compare( MW_VERSION, '1.40', '>=' ) ) {
+			$this->templateParserClass = 'MediaWiki\Html\TemplateParser';
+			$this->htmlClass = 'MediaWiki\Html\Html';
+			$this->linkerClass = 'MediaWiki\linker\Linker';
+		} else {
+			$this->templateParserClass = 'TemplateParser';
+			$this->htmlClass = 'Html';
+			$this->linkerClass = 'Linker';
+		}
 	}
 
 	/**
@@ -75,9 +75,8 @@ class WriteTemplate extends BaseTemplate
 	 *
 	 * @return string html
 	 */
-	protected function getLogo($id = 'p-logo')
-	{
-		$html = Html::openElement(
+	protected function getLogo( $id = 'p-logo' ) {
+		$html = $this->htmlClass::openElement(
 			'div',
 			[
 				'id' => $id,
@@ -87,48 +86,55 @@ class WriteTemplate extends BaseTemplate
 		);
 
 		// Hamburger menu
-		$html .= Html::element('span', ['class' => 'mw-hamb']);
+		$html .= $this->htmlClass::element( 'span', [ 'class' => 'mw-hamb' ] );
 
 		// Site title
-		$siteTitle = Html::rawElement(
+		$siteTitle = $this->htmlClass::element(
 			'span',
 			[
-				'class' => 'mw-sitename'
+				'class' => 'mw-desktop-sitename'
 			],
-			RequestContext::getMain()->getConfig()->get('Sitename')
+			RequestContext::getMain()->getConfig()->get( 'Sitename' )
+		);
+		$siteMobileTitle = $this->htmlClass::element(
+			'span',
+			[
+				'class' => 'mw-mobile-sitename'
+			],
+			RequestContext::getMain()->getConfig()->get( 'WriteMobileSitename' ) ??
+				RequestContext::getMain()->getConfig()->get( 'Sitename' )
+		);
+		$logoWidth = RequestContext::getMain()->getConfig()->get( 'WriteLogoWidth' );
+		$siteLogo = ( RequestContext::getMain()->getConfig()->get( 'WriteShowLogo' ) === 'main' ?
+			$this->htmlClass::rawElement(
+				'span',
+				[
+					'class' => 'mw-wiki-logo',
+					'style' => (
+						$logoWidth !== 'none' ?
+							'width: ' . $logoWidth . ';' :
+							''
+					)
+				]
+			) :
+			''
 		);
 
-		$logos = RequestContext::getMain()->getConfig()->get('Logos');
-		if (RequestContext::getMain()->getConfig()->get('WriteWordmark') || isset($logos['wordmark'])) {
-			$wordmarkImage = Html::element('img', [
-				'src' => RequestContext::getMain()->getConfig()->get('WriteWordmark')['src'] ?? $logos['wordmark']['src'],
-				'height' => RequestContext::getMain()->getConfig()->get('WriteWordmark')['height'] ?? ($logos['wordmark']['height'] ?? null),
-				'width' => RequestContext::getMain()->getConfig()->get('WriteWordmark')['width'] ?? ($logos['wordmark']['width'] ?? null),
-			]);
-		} else {
-			$wordmarkImage = Html::rawElement('span', ['class' => 'mw-wiki-logo']);
-		}
-
-		$siteLogo = (RequestContext::getMain()->getConfig()->get('WriteShowLogo') === 'main' ?
-			$wordmarkImage : ''
-		);
-
-		$html .= Html::rawElement(
+		$html .= $this->htmlClass::rawElement(
 			'a',
 			[
 				'id' => 'p-banner',
 				'class' => 'mw-wiki-title navbar-brand',
 				'href' => $this->data['nav_urls']['mainpage']['href']
-			] + Linker::tooltipAndAccesskeyAttribs('p-logo'),
+			] + $this->linkerClass::tooltipAndAccesskeyAttribs( 'p-logo' ),
 			$siteLogo .
-				(RequestContext::getMain()->getConfig()->get('WriteUseLogoWithoutText') ?
-					'' : (RequestContext::getMain()->getConfig()->get('WriteWordmark') || isset($logos['wordmark']) ?
-						'' : $siteTitle
-					)
-				)
+			( RequestContext::getMain()->getConfig()->get( 'WriteUseLogoWithoutText' ) ?
+				'' :
+				$siteTitle . ' ' . $siteMobileTitle
+			)
 		);
 
-		$html .= Html::closeElement('div');
+		$html .= $this->htmlClass::closeElement( 'div' );
 
 		return $html;
 	}
@@ -138,25 +144,24 @@ class WriteTemplate extends BaseTemplate
 	 *
 	 * @return string html
 	 */
-	protected function getSearch()
-	{
-		$html = Html::openElement(
+	protected function getSearch() {
+		$html = $this->htmlClass::openElement(
 			'form',
 			[
-				'action' => $this->get('wgScript'),
+				'action' => $this->get( 'wgScript' ),
 				'role' => 'search',
 				'class' => 'mw-portlet form-inline my-lg-0',
 				'id' => 'p-search'
 			]
 		);
-		$html .= Html::hidden('title', $this->get('searchtitle'));
-		$html .= Html::rawElement(
+		$html .= $this->htmlClass::hidden( 'title', $this->get( 'searchtitle' ) );
+		$html .= $this->htmlClass::rawElement(
 			'h3',
-			['hidden'],
-			Html::label($this->getMsg('search')->text(), 'searchInput')
+			[ 'hidden' ],
+			$this->htmlClass::label( $this->getMsg( 'search' )->text(), 'searchInput' )
 		);
-		$html .= $this->makeSearchInput(['id' => 'searchInput', 'class' => 'form-control mr-sm-2']);
-		$html .= $this->makeSearchButton(
+		$html .= $this->getSkin()->makeSearchInput( [ 'id' => 'searchInput', 'class' => 'form-control mr-sm-2' ] );
+		$html .= $this->getSkin()->makeSearchButton(
 			'go',
 			[
 				'hidden',
@@ -164,7 +169,7 @@ class WriteTemplate extends BaseTemplate
 				'class' => 'searchButton btn btn-outline-dark my-2 my-sm-0'
 			]
 		);
-		$html .= Html::closeElement('form');
+		$html .= $this->htmlClass::closeElement( 'form' );
 
 		return $html;
 	}
@@ -173,112 +178,64 @@ class WriteTemplate extends BaseTemplate
 	 * Generates aside edit menu
 	 * @return string html
 	 */
-	protected function getAside()
-	{
-		$html = Html::openElement(
-			'aside',
-			['id' => 'mw-page-header-links'],
-		);
+	protected function getAside() {
+		$html = $this->htmlClass::openElement( 'aside' );
 
-		$html .= Html::openElement(
+		$html .= $this->htmlClass::rawElement(
 			'div',
-			['class' => 'd-flex flex-row'],
-		);
-
-		$html .= $this->getPortlet(
-			'namespaces',
-			$this->data['content_navigation']['views'],
-			null,
-			['portlet-list-tag' => 'div', 'list-item' => ['tag' => 'span']]
-		);
-
-		$html .= Html::rawElement(
-			'div',
-			['class' => 'dropdown'],
-			Html::rawElement(
-				'a',
-				[
-					'class' => 'dropdown-toggle ',
-					'role' => 'button',
-					'data-toggle' => 'dropdown',
-					'data-display' => 'static',
-					'aria-haspopup' => 'true',
-					'aria-expanded' => 'false'
-				],
-				$this->getMsg('actions')->text()
+			[ 'class' => 'd-flex flex-row flex-wrap' ],
+			$this->getPortlet(
+				'namespaces',
+				$this->data['content_navigation']['namespaces'],
+				null,
+				[ 'portlet-list-tag' => 'div', 'list-item' => [ 'tag' => 'span' ] ]
 			) .
-				Html::rawElement(
+			$this->htmlClass::rawElement( 'div', [ 'class' => 'dropdown' ],
+				$this->htmlClass::element(
+					'a',
+					[
+						'class' => 'dropdown-toggle ',
+						'role' => 'button',
+						'data-bs-toggle' => 'dropdown',
+						'data-bs-display' => 'static',
+						'aria-haspopup' => 'true',
+						'aria-expanded' => 'false'
+					],
+					$this->getMsg( 'actions' )->text()
+				) .
+				$this->htmlClass::rawElement(
 					'div',
-					['class' => 'dropdown-menu dropdown-menu-right'],
+					[ 'class' => 'dropdown-menu dropdown-menu-end' ],
+					$this->getPageLinks()
+				)
+			) .
+			$this->htmlClass::rawElement( 'div', [ 'class' => 'dropdown' ],
+				$this->htmlClass::element(
+					'a',
+					[
+						'class' => 'dropdown-toggle ',
+						'role' => 'button',
+						'data-bs-toggle' => 'dropdown',
+						'data-bs-display' => 'static',
+						'aria-haspopup' => 'true',
+						'aria-expanded' => 'false'
+					],
+					$this->getMsg( 'toolbox' )->text()
+				) .
+				$this->htmlClass::rawElement(
+					'div',
+					[ 'class' => 'dropdown-menu dropdown-menu dropdown-menu-end' ],
 					$this->getPortlet(
-						'actions',
-						$this->data['content_navigation']['actions'],
-						'actions',
-						['add-class' => 'dropdown-item']
+						'tb',
+						$this->data['sidebar']['TOOLBOX'],
+						'toolbox',
+						[ 'add-class' => 'dropdown-item' ]
 					)
 				)
-		) .
-			Html::rawElement(
-				'div',
-				['class' => 'dropdown'],
-				Html::rawElement(
-					'a',
-					[
-						'class' => 'dropdown-toggle ',
-						'role' => 'button',
-						'data-toggle' => 'dropdown',
-						'data-display' => 'static',
-						'aria-haspopup' => 'true',
-						'aria-expanded' => 'false'
-					],
-					$this->getMsg('toolbox')->text()
-				) .
-					Html::rawElement(
-						'div',
-						['class' => 'dropdown-menu dropdown-menu dropdown-menu-right'],
-						$this->getPortlet(
-							'tb',
-							count($this->data['sidebar']['TOOLBOX']) === 0 ?
-								$this->getToolbox() :
-								$this->data['sidebar']['TOOLBOX'],
-							'toolbox',
-							['add-class' => 'dropdown-item']
-						)
-					)
-			);
+			)
+		);
 
-		if ($this->data['content_navigation']['variants']) {
-			$html .= Html::rawElement(
-				'div',
-				['class' => 'dropdown'],
-				Html::rawElement(
-					'a',
-					[
-						'class' => 'dropdown-toggle ',
-						'role' => 'button',
-						'data-toggle' => 'dropdown',
-						'data-display' => 'static',
-						'aria-haspopup' => 'true',
-						'aria-expanded' => 'false'
-					],
-					$this->getMsg('variants')->text()
-				) .
-					Html::rawElement(
-						'div',
-						['class' => 'dropdown-menu dropdown-menu dropdown-menu-right'],
-						$this->getPortlet(
-							'variants',
-							$this->data['content_navigation']['variants'],
-							'variants',
-							['add-class' => 'dropdown-item']
-						)
-					)
-			);
-		}
-
-		$html .= Html::closeElement('div');
-
-		$html .= Html::closeElement('aside');
+		$html .= $this->htmlClass::closeElement( 'aside' );
 
 		return $html;
 	}
@@ -295,23 +252,22 @@ class WriteTemplate extends BaseTemplate
 	 *
 	 * @return string html
 	 */
-	protected function getSiteNavigation()
-	{
+	protected function getSiteNavigation() {
 		$html = '';
 
-		$html .= (RequestContext::getMain()->getConfig()->get('WriteShowLogo') === 'sidebar' ?
-			Html::rawElement(
+		$html .= ( RequestContext::getMain()->getConfig()->get( 'WriteShowLogo' ) === 'sidebar' ?
+			$this->htmlClass::rawElement(
 				'div',
 				[
 					'class' => 'mw-wiki-navigation-logo'
 				],
-				Html::rawElement(
+				$this->htmlClass::rawElement(
 					'a',
 					[
 						'class' => 'mw-wiki-logo',
-						'style' => (RequestContext::getMain()->getConfig()->get('WriteContentWidth') === 'wide' ?
+						'style' => ( RequestContext::getMain()->getConfig()->get( 'WriteContentWidth' ) === 'wide' ?
 							'height: clamp(4em, 4vw, 10em); width: clamp(4em, 60%, 10em);' :
-							''),
+							'' ),
 						'href' => $this->data['nav_urls']['mainpage']['href']
 					]
 				)
@@ -322,37 +278,39 @@ class WriteTemplate extends BaseTemplate
 		$sidebar = $this->getSidebar();
 		$sidebar['SEARCH'] = false;
 		$sidebar['TOOLBOX'] = false;
-		$sidebar['LANGUAGES'] = false;
 
-		foreach ($sidebar as $name => $content) {
-			if ($content === false) {
+		foreach ( $sidebar as $name => $content ) {
+			if ( $content === false ) {
 				continue;
 			}
 			// Numeric strings gets an integer when set as key, cast back - T73639
 			$name = (string)$name;
 
-			switch ($name) {
+			switch ( $name ) {
 				case 'SEARCH':
 					$html .= $this->getSearch();
 					break;
 				case 'TOOLBOX':
 					$html .= $this->getPortlet(
 						'tb',
-						count($this->data['sidebar']['TOOLBOX']) === 0 ?
-							$this->getToolbox() :
-							$this->data['sidebar']['TOOLBOX'],
+						$this->data['sidebar']['TOOLBOX'],
 						'toolbox'
 					);
 					break;
 				case 'LANGUAGES':
-					$html .= null;
+					$html .= $this->getPortlet(
+						'lang',
+						$content['content'],
+						'otherlanguages',
+						[ 'add-class' => 'nav-link' ]
+					);
 					break;
 				default:
 					$html .= $this->getPortlet(
 						$name,
-						$content['content'],
+						$content[ 'content' ],
 						null,
-						['add-class' => 'nav-link']
+						[ 'add-class' => 'nav-link' ]
 					);
 					break;
 			}
@@ -361,90 +319,115 @@ class WriteTemplate extends BaseTemplate
 	}
 
 	/**
+	 * Generates page-related tools/links
+	 * You will probably want to split this up and move all of these
+	 * to somewhere that makes sense for your skin.
+	 *
+	 * @return string html
+	 */
+	protected function getPageLinks() {
+		// 'View' actions for the page: view, edit, view history, etc
+		$html = $this->getPortlet(
+			'views',
+			$this->data['content_navigation']['views'],
+			null,
+			[ 'add-class' => 'dropdown-item' ]
+		);
+		// Other actions for the page: move, delete, protect, everything else
+		$html .= $this->getPortlet(
+			'actions',
+			$this->data['content_navigation']['actions'],
+			null,
+			[ 'add-class' => 'dropdown-item' ]
+		);
+
+		return $html;
+	}
+
+	/**
 	 * Generates user tools menu
 	 * @return string html
 	 */
-	protected function getUserLinks()
-	{
+	protected function getUserLinks() {
 		$personaltools = $this->getPersonalTools();
 		// Remove Echo icons from the personal menu
 		$echoicons = [];
-		if (isset($personaltools['notifications-alert'])) {
-			$echoicons['notifications-alert'] = $personaltools['notifications-alert'];
-			unset($personaltools['notifications-alert']);
+		if ( isset( $personaltools[ 'notifications-alert' ] ) ) {
+			$echoicons[ 'notifications-alert' ] = $personaltools[ 'notifications-alert' ];
+			unset( $personaltools[ 'notifications-alert' ] );
 		}
-		if (isset($personaltools['notifications-notice'])) {
-			$echoicons['notifications-notice'] = $personaltools['notifications-notice'];
-			unset($personaltools['notifications-notice']);
+		if ( isset( $personaltools[ 'notifications-notice' ] ) ) {
+			$echoicons[ 'notifications-notice' ] = $personaltools[ 'notifications-notice' ];
+			unset( $personaltools[ 'notifications-notice' ] );
 		}
 		// HTML start
 		$html = '';
 		// Echo icons
-		if (!empty($echoicons)) {
+		if ( !empty( $echoicons ) ) {
 			$icons = '';
-			foreach ($echoicons as $key => $item) {
-				$icons .= $this->makeListItem($key, $item);
+			foreach ( $echoicons as $key => $item ) {
+				$icons .= $this->getSkin()->makeListItem( $key, $item );
 			}
-			$html .= Html::rawElement(
+			$html .= $this->htmlClass::rawElement(
 				'div',
-				['id' => 'personal-echo-icons'],
-				Html::rawElement('ul', [], $icons)
+				[ 'id' => 'personal-echo-icons' ],
+				$this->htmlClass::rawElement( 'ul', [], $icons )
 			);
 		}
 		// User tools
-		$html .= Html::openElement(
-			'div',
-			['id' => 'user-tools', 'class' => 'btn-group']
-		);
+		$html .= $this->htmlClass::openElement(
+							'div',
+							[ 'id' => 'user-tools', 'class' => 'btn-group' ]
+						);
 
 		// User icon for smaller screens
-		$html .= Html::rawElement(
-			'div',
-			['class' => 'profile-icon'],
-			''
-		);
+		$html .= $this->htmlClass::rawElement(
+							 'div',
+							 [ 'class' => 'profile-icon' ],
+							 ''
+						 );
 
 		// Splitted dropdown button (with username or login option)
-		$html .= Html::rawElement(
-			'a',
-			['href' =>
-			$personaltools['userpage']['links'][0]['href'] ??
-				$personaltools['login']['links'][0]['href'] ??
-				$personaltools['login-private']['links'][0]['href']],
-			Html::rawElement(
-				'button',
-				[
-					'class' => 'btn btn-link',
-				],
-				$personaltools['userpage']['links'][0]['text'] ??
-					$this->getMsg('login')->text()
-			)
-		) .
-			Html::rawElement(
-				'button',
-				[
-					'class' => 'btn btn-link dropdown-toggle dropdown-toggle-split',
-					'type' => 'button',
-					'data-toggle' => 'dropdown',
-					'aria-haspopup' => 'true',
-					'aria-expanded' => 'false'
-				],
-				Html::rawElement('span', ['class' => 'sr-only'], '&darr;')
-			);
+		$html .= $this->htmlClass::rawElement(
+							 'a',
+							 [ 'href' =>
+								 $personaltools['userpage']['links'][0]['href'] ??
+									$personaltools['login']['links'][0]['href'] ??
+									$personaltools['login-private']['links'][0]['href'] ],
+							 $this->htmlClass::element(
+								 'button',
+								 [
+									 'class' => 'btn btn-link',
+								 ],
+								 $personaltools['userpage']['links'][0]['text'] ??
+									$this->getMsg( 'login' )->text()
+							 )
+						 ) .
+						 $this->htmlClass::rawElement(
+							 'button',
+							 [
+								 'class' => 'btn btn-link dropdown-toggle dropdown-toggle-split',
+								 'type' => 'button',
+								 'data-bs-toggle' => 'dropdown',
+								 'aria-haspopup' => 'true',
+								 'aria-expanded' => 'false'
+							 ],
+							 $this->htmlClass::rawElement( 'span', [ 'class' => 'visually-hidden' ], '&darr;' )
+						 );
 
 		// Basic list output
-		$html .= Html::rawElement(
-			'div',
-			['class' => 'dropdown-menu dropdown-menu-right'],
-			$this->getPortlet(
-				'personal',
-				$personaltools,
-				'personaltools',
-				['add-class' => 'dropdown-item']
-			)
-		);
+		$html .= $this->htmlClass::rawElement(
+							 'div',
+							 [ 'class' => 'dropdown-menu dropdown-menu-end' ],
+							 $this->getPortlet(
+								 'personal',
+								 $personaltools,
+								 'personaltools',
+								 [ 'add-class' => 'dropdown-item' ]
+							 )
+						 );
 
-		$html .= Html::closeElement('div');
+		$html .= $this->htmlClass::closeElement( 'div' );
 
 		return $html;
 	}
@@ -453,51 +436,46 @@ class WriteTemplate extends BaseTemplate
 	 * Generates siteNotice, if any
 	 * @return string html
 	 */
-	protected function getSiteNotice()
-	{
-		return $this->getIfExists('sitenotice', [
+	protected function getSiteNotice() {
+		return $this->getIfExists( 'sitenotice', [
 			'wrapper' => 'div',
-			'parameters' => ['id' => 'siteNotice']
-		]);
+			'parameters' => [ 'id' => 'siteNotice' ]
+		] );
 	}
 
 	/**
 	 * Generates new talk message banner, if any
 	 * @return string html
 	 */
-	protected function getNewTalk()
-	{
-		return $this->getIfExists('newtalk', [
+	protected function getNewTalk() {
+		return $this->getIfExists( 'newtalk', [
 			'wrapper' => 'div',
-			'parameters' => ['class' => 'usermessage']
-		]);
+			'parameters' => [ 'class' => 'usermessage' ]
+		] );
 	}
 
 	/**
 	 * Generates subtitle stuff, if any
 	 * @return string html
 	 */
-	protected function getPageSubtitle()
-	{
-		return $this->getIfExists('subtitle', ['wrapper' => 'p']);
+	protected function getPageSubtitle() {
+		return $this->getIfExists( 'subtitle', [ 'wrapper' => 'p' ] );
 	}
 
 	/**
 	 * Generates category links, if any
 	 * @return string html
 	 */
-	protected function getCategoryLinks()
-	{
-		return $this->getIfExists('catlinks');
+	protected function getCategoryLinks() {
+		return $this->getIfExists( 'catlinks' );
 	}
 
 	/**
 	 * Generates data after content stuff, if any
 	 * @return string html
 	 */
-	protected function getDataAfterContent()
-	{
-		return $this->getIfExists('dataAfterContent');
+	protected function getDataAfterContent() {
+		return $this->getIfExists( 'dataAfterContent' );
 	}
 
 	/**
@@ -508,8 +486,7 @@ class WriteTemplate extends BaseTemplate
 	 *
 	 * @return string html
 	 */
-	protected function getIfExists($object, $setOptions = [])
-	{
+	protected function getIfExists( $object, $setOptions = [] ) {
 		$options = $setOptions + [
 			'wrapper' => 'none',
 			'parameters' => []
@@ -517,14 +494,14 @@ class WriteTemplate extends BaseTemplate
 
 		$html = '';
 
-		if ($this->data[$object]) {
-			if ($options['wrapper'] == 'none') {
-				$html .= $this->get($object);
+		if ( $this->data[$object] ) {
+			if ( $options['wrapper'] == 'none' ) {
+				$html .= $this->get( $object );
 			} else {
-				$html .= Html::rawElement(
+				$html .= $this->htmlClass::rawElement(
 					$options['wrapper'],
 					$options['parameters'],
-					$this->get($object)
+					$this->get( $object )
 				);
 			}
 		}
@@ -542,8 +519,7 @@ class WriteTemplate extends BaseTemplate
 	 *
 	 * @return string html
 	 */
-	protected function getPortlet($name, $content, $msg = null, $setOptions = [])
-	{
+	protected function getPortlet( $name, $content, $msg = null, $setOptions = [] ) {
 		// random stuff to override with any provided options
 		$options = $setOptions + [
 			// extra classes/ids
@@ -564,60 +540,58 @@ class WriteTemplate extends BaseTemplate
 		];
 
 		// Handle the different $msg possibilities
-		if ($msg === null) {
+		if ( $msg === null ) {
 			$msg = $name;
-		} elseif (is_array($msg)) {
-			$msgString = array_shift($msg);
+		} elseif ( is_array( $msg ) ) {
+			$msgString = array_shift( $msg );
 			$msgParams = $msg;
 			$msg = $msgString;
 		}
-		$msgObj = $this->getMsg($msg);
-		if ($msgObj->exists()) {
-			if (isset($msgParams) && !empty($msgParams)) {
-				$msgString = $this->getMsg($msg, $msgParams)->parse();
+		$msgObj = $this->getMsg( $msg );
+		if ( $msgObj->exists() ) {
+			if ( isset( $msgParams ) && !empty( $msgParams ) ) {
+				$msgString = $this->getMsg( $msg, $msgParams )->parse();
 			} else {
 				$msgString = $msgObj->parse();
 			}
 		} else {
-			$msgString = htmlspecialchars($msg);
+			$msgString = htmlspecialchars( $msg );
 		}
 
-		$labelId = Sanitizer::escapeIdForAttribute("p-$name-label");
+		$labelId = Sanitizer::escapeIdForAttribute( "p-$name-label" );
 
-		if (is_array($content)) {
-			if (count($content) === 0) {
-				return;
+		if ( is_array( $content ) ) {
+			if ( count( $content ) === 0 ) { return;
 			}
-			$contentText = Html::openElement(
-				$options['portlet-list-tag'],
-				['lang' => $this->get('userlang'), 'dir' => $this->get('dir')]
+			$contentText = $this->htmlClass::openElement( $options['portlet-list-tag'],
+				[ 'lang' => $this->get( 'userlang' ), 'dir' => $this->get( 'dir' ) ]
 			);
 			$contentText .= $options['list-prepend'];
-			foreach ($content as $key => $item) {
-				if (isset($options['add-class'])) {
-					if (isset($item['link-class'])) {
+			foreach ( $content as $key => $item ) {
+				if ( isset( $options['add-class'] ) ) {
+					if ( isset( $item['link-class'] ) ) {
 						$item['link-class'] .= " {$options['add-class']}";
 					} else {
 						$item['link-class'] = " {$options['add-class']}";
 					}
 				}
-				$contentText .= $this->makeListItem($key, $item, $options['list-item']);
+				$contentText .= $this->getSkin()->makeListItem( $key, $item, $options['list-item'] );
 			}
 			// Compatibility with extensions still using SkinTemplateToolboxEnd or similar
-			if (is_array($options['hooks'])) {
-				foreach ($options['hooks'] as $hook) {
-					if (is_string($hook)) {
+			if ( is_array( $options['hooks'] ) ) {
+				foreach ( $options['hooks'] as $hook ) {
+					if ( is_string( $hook ) ) {
 						$hookOptions = [];
 					} else {
 						// it should only be an array otherwise
-						$hookOptions = array_values($hook)[0];
-						$hook = array_keys($hook)[0];
+						$hookOptions = array_values( $hook )[0];
+						$hook = array_keys( $hook )[0];
 					}
-					$contentText .= $this->deprecatedHookHack($hook, $hookOptions);
+					$contentText .= $this->deprecatedHookHack( $hook, $hookOptions );
 				}
 			}
 
-			$contentText .= Html::closeElement($options['portlet-list-tag']);
+			$contentText .= $this->htmlClass::closeElement( $options['portlet-list-tag'] );
 		} else {
 			$contentText = $content;
 		}
@@ -625,79 +599,46 @@ class WriteTemplate extends BaseTemplate
 		// Special handling for role=search and other weird things
 		$divOptions = [
 			'role' => 'navigation',
-			'id' => Sanitizer::escapeIdForAttribute($options['id']),
-			'title' => Linker::titleAttrib($options['id']),
+			'id' => Sanitizer::escapeIdForAttribute( $options['id'] ),
+			'title' => $this->linkerClass::titleAttrib( $options['id'] ),
 			'aria-labelledby' => $labelId
 		];
-		if (!is_array($options['class'])) {
-			$class = [$options['class']];
+		if ( !is_array( $options['class'] ) ) {
+			$class = [ $options['class'] ];
 		}
-		if (!is_array($options['extra-classes'])) {
-			$extraClasses = [$options['extra-classes']];
+		if ( !is_array( $options['extra-classes'] ) ) {
+			$extraClasses = [ $options['extra-classes'] ];
 		}
-		$divOptions['class'] = array_merge($class, $extraClasses);
+		$divOptions['class'] = array_merge( $class, $extraClasses );
 
 		$labelOptions = [
 			'id' => $labelId,
-			'lang' => $this->get('userlang'),
-			'dir' => $this->get('dir'),
+			'lang' => $this->get( 'userlang' ),
+			'dir' => $this->get( 'dir' ),
 			'class' => 'nav-link disabled',
 			'href' => '#',
 			'role' => 'button'
 		];
 
-		if ($options['body-wrapper'] !== 'none') {
-			$bodyDivOptions = ['class' => $options['body-class']];
-			if (is_string($options['body-id'])) {
+		if ( $options['body-wrapper'] !== 'none' ) {
+			$bodyDivOptions = [ 'class' => $options['body-class'] ];
+			if ( is_string( $options['body-id'] ) ) {
 				$bodyDivOptions['id'] = $options['body-id'];
 			}
-			$body = Html::rawElement(
-				$options['body-wrapper'],
-				$bodyDivOptions,
+			$body = $this->htmlClass::rawElement( $options['body-wrapper'], $bodyDivOptions,
 				$contentText .
-					$this->getAfterPortlet($name)
+				$this->getSkin()->getAfterPortlet( $name )
 			);
 		} else {
-			$body = $contentText . $this->getAfterPortlet($name);
+			$body = $contentText . $this->getSkin()->getAfterPortlet( $name );
 		}
 
-		$html = Html::rawElement(
-			'div',
-			$divOptions,
-			Html::rawElement('a', $labelOptions, $msgString) .
-				$body
+		$html = $this->htmlClass::rawElement( 'div', $divOptions,
+			$this->htmlClass::rawElement( 'a', $labelOptions, $msgString ) .
+			$body
 		);
 
 		return $html;
-	}
-
-	/**
-	 * Backward compatible version of BaseTemplate::getAfterPortlet().
-	 *
-	 * @param $name
-	 *
-	 * @return string html
-	 */
-	protected function getAfterPortlet($name)
-	{
-		if ($this->versionCompare('1.37', '<')) {
-			return parent::getAfterPortlet($name);
-		} else {
-			$html = '';
-			$content = '';
-			$this->getHookRunner()->onBaseTemplateAfterPortlet($this, $name, $content);
-			$content .= $this->getSkin()->getAfterPortlet($name);
-
-			if ($content !== '') {
-				$html = Html::rawElement(
-					'div',
-					['class' => ['after-portlet', 'after-portlet-' . $name]],
-					$content
-				);
-			}
-
-			return $html;
-		}
 	}
 
 	/**
@@ -709,14 +650,13 @@ class WriteTemplate extends BaseTemplate
 	 *
 	 * @return string html
 	 */
-	protected function deprecatedHookHack($hook, $hookOptions = [])
-	{
+	protected function deprecatedHookHack( $hook, $hookOptions = [] ) {
 		$hookContents = '';
 		ob_start();
-		Hooks::run($hook, $hookOptions);
+		Hooks::run( $hook, $hookOptions );
 		$hookContents = ob_get_contents();
 		ob_end_clean();
-		if (!trim($hookContents)) {
+		if ( !trim( $hookContents ) ) {
 			$hookContents = '';
 		}
 
@@ -738,106 +678,95 @@ class WriteTemplate extends BaseTemplate
 	 *
 	 * @return string html
 	 */
-	protected function getFooterBlock($setOptions = [])
-	{
+	protected function getFooterBlock( $setOptions = [] ) {
 		// Set options and fill in defaults
 		$options = $setOptions + [
 			'id' => 'footer',
 			'class' => 'mw-footer',
+			'order' => 'iconsfirst',
 			'link-prefix' => 'footer',
 			'link-style' => null
 		];
 
 		// workaround to remove empty subarrays of footer icons (i.e. missing copyright)
 		// that cause notice in MW 1.32
-		$validFooterIcons = array_filter(array_map('array_filter', $this->get('footericons')));
-		$validFooterLinks = $this->getFooterLinks($options['link-style']);
+		$validFooterIcons = array_filter( array_map( 'array_filter', $this->get( 'footericons' ) ) );
+		$validFooterLinks = $this->getFooterLinks( $options['link-style'] );
 
 		$html = '';
 
-		$html .= Html::openElement('div', [
+		$html .= $this->htmlClass::openElement( 'div', [
 			'id' => $options['id'],
 			'class' => $options['class'],
 			'role' => 'contentinfo',
-			'lang' => $this->get('userlang'),
-			'dir' => $this->get('dir')
-		]);
+			'lang' => $this->get( 'userlang' ),
+			'dir' => $this->get( 'dir' )
+		] );
 
 		$iconsHTML = '';
-		if (count($validFooterIcons) > 0) {
-			$iconsHTML .= Html::openElement('ul', ['id' => "{$options['link-prefix']}-icons"]);
-			foreach ($validFooterIcons as $blockName => $footerIcons) {
-				$iconsHTML .= Html::openElement('li', [
+		if ( count( $validFooterIcons ) > 0 ) {
+			$iconsHTML .= $this->htmlClass::openElement( 'ul', [ 'id' => "{$options['link-prefix']}-icons" ] );
+			foreach ( $validFooterIcons as $blockName => $footerIcons ) {
+				$iconsHTML .= $this->htmlClass::openElement( 'li', [
 					'id' => Sanitizer::escapeIdForAttribute(
 						"{$options['link-prefix']}-{$blockName}ico"
 					),
 					'class' => 'footer-icons'
-				]);
-				foreach ($footerIcons as $iconkey => $icon) {
-					$iconsHTML .= $this->getSkin()->makeFooterIcon($icon);
+				] );
+				foreach ( $footerIcons as $iconkey => $icon ) {
+					$iconsHTML .= $this->getSkin()->makeFooterIcon( $icon );
 				}
-				$iconsHTML .= Html::closeElement('li');
+				$iconsHTML .= $this->htmlClass::closeElement( 'li' );
 			}
-			$iconsHTML .= Html::closeElement('ul');
+			$iconsHTML .= $this->htmlClass::closeElement( 'ul' );
 		}
 
 		$linksHTML = '';
-		if (count($validFooterLinks) > 0) {
-			if ($options['link-style'] == 'flat') {
-				$linksHTML .= Html::openElement('ul', [
+		if ( count( $validFooterLinks ) > 0 ) {
+			if ( $options['link-style'] == 'flat' ) {
+				$linksHTML .= $this->htmlClass::openElement( 'ul', [
 					'id' => "{$options['link-prefix']}-list",
 					'class' => 'footer-places'
-				]);
-				foreach ($validFooterLinks as $link) {
-					$linksHTML .= Html::rawElement(
+				] );
+				foreach ( $validFooterLinks as $link ) {
+					$linksHTML .= $this->htmlClass::rawElement(
 						'li',
-						['id' => Sanitizer::escapeIdForAttribute($link)],
-						$this->get($link)
+						[ 'id' => Sanitizer::escapeIdForAttribute( $link ) ],
+						$this->get( $link )
 					);
 				}
-				$linksHTML .= Html::closeElement('ul');
+				$linksHTML .= $this->htmlClass::closeElement( 'ul' );
 			} else {
-				$linksHTML .= Html::openElement('div', ['id' => "{$options['link-prefix']}-list"]);
-				foreach ($validFooterLinks as $category => $links) {
-					$linksHTML .= Html::openElement(
-						'ul',
-						['id' => Sanitizer::escapeIdForAttribute(
+				$linksHTML .= $this->htmlClass::openElement( 'div', [ 'id' => "{$options['link-prefix']}-list" ] );
+				foreach ( $validFooterLinks as $category => $links ) {
+					$linksHTML .= $this->htmlClass::openElement( 'ul',
+						[ 'id' => Sanitizer::escapeIdForAttribute(
 							"{$options['link-prefix']}-{$category}"
-						)]
+						) ]
 					);
-					foreach ($links as $link) {
-						$linksHTML .= Html::rawElement(
+					foreach ( $links as $link ) {
+						$linksHTML .= $this->htmlClass::rawElement(
 							'li',
-							['id' => Sanitizer::escapeIdForAttribute(
+							[ 'id' => Sanitizer::escapeIdForAttribute(
 								"{$options['link-prefix']}-{$category}-{$link}"
-							)],
-							$this->get($link)
+							) ],
+							$this->get( $link )
 						);
 					}
-					$linksHTML .= Html::closeElement('ul');
+					$linksHTML .= $this->htmlClass::closeElement( 'ul' );
 				}
-				$linksHTML .= Html::closeElement('div');
+				$linksHTML .= $this->htmlClass::closeElement( 'div' );
 			}
 		}
 
-		$html .= $linksHTML . $iconsHTML;
+		if ( $options['order'] == 'iconsfirst' ) {
+			$html .= $iconsHTML . $linksHTML;
+		} else {
+			$html .= $linksHTML . $iconsHTML;
+		}
 
-		$html .= $this->getClear() . Html::closeElement('div');
+		$html .= $this->getClear() . $this->htmlClass::closeElement( 'div' );
 
 		return $html;
-	}
-
-	/**
-	 * Compares the current MediaWiki version with a specific version using PHP's version_compare().
-	 *
-	 * @param string $version
-	 * @param string $operator
-	 *
-	 * @return int|bool
-	 */
-	protected function versionCompare($version, $operator)
-	{
-		$mwVersion = defined(MW_VERSION) ? MW_VERSION : $GLOBALS['wgVersion'];
-		return version_compare($mwVersion, $version, $operator);
 	}
 }
